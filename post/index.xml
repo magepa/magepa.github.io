@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes" ?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>Posts on 懐石温泉旅館まげわ</title>
+    <link>http://localhost:1313/post/</link>
+    <description>Recent content in Posts on 懐石温泉旅館まげわ</description>
+    <generator>Hugo -- gohugo.io</generator>
+    <language>ja-JP</language>
+    
+    
+    
+    <lastBuildDate>Sun, 15 Feb 2015 22:08:32 JST</lastBuildDate>
+    <atom:link href="http://localhost:1313/post/index.xml" rel="self" type="application/rss+xml" />
+    
+    <item>
+      <title>Hugo 始めました</title>
+      <link>http://localhost:1313/post/my-first-hugo/</link>
+      <pubDate>Sun, 15 Feb 2015 22:08:32 JST</pubDate>
+      
+      <guid>http://localhost:1313/post/my-first-hugo/</guid>
+      <description>&lt;p&gt;github.io用にoctpressで少しだけ書いておりました。&lt;br /&gt;
+このたび新しくPC環境を作り、BeagleBoneBlackも手元に来たことだしと&lt;br /&gt;
+いろいろ手を加えたところ、わけわからんテンプレートを見事に破壊してしまい&lt;br /&gt;
+ロールバックしないと記事の投稿も無視されるようになってしまいました。&lt;/p&gt;
+
+&lt;p&gt;そんなに書き溜めている分もないので、&lt;br /&gt;
+巨大すぎて何してるのかよくわからん環境を放置して &lt;a href=&#34;http://http://gohugo.io/&#34;&gt;Hugo&lt;/a&gt; に移ってきました。&lt;br /&gt;
+golang 大好きとかもありますけどこう、&lt;br /&gt;
+ソフトウェアが何やってるのかはっきりわかるのはとても良いように思います。&lt;br /&gt;
+見よう見真似でいじくりまわすと見た目はともかく&lt;br /&gt;
+いじくった場所が変わるので大変わかりやすいです。&lt;/p&gt;
+
+&lt;pre&gt;&lt;code&gt;$ hugo new post/mynewentry.md
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;とかやって新しいファイルをつくって&lt;/p&gt;
+
+&lt;pre&gt;&lt;code&gt;$ hugo  server --buildDrafts
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;とかするとhtmlが生成されるのでそれをそのままgitにpushするだけです。&lt;br /&gt;
+octpressと比べるとデプロイのところが自動になってないのが面倒かもしれませんが&lt;br /&gt;
+gitだしそのうちシェルスクリプトにでもしようかなと。&lt;/p&gt;
+
+&lt;p&gt;ぼちぼちいきますのでよろしくお願いいたします。&lt;/p&gt;
+</description>
+    </item>
+    
+  </channel>
+</rss>
