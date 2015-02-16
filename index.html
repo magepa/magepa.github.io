@@ -25,14 +25,14 @@
     <div class="sidebar pure-u-1 pure-u-md-1-4">
     <div class="header">
         <hgroup>
-            <h1 class="brand-title"><a href="https://magepa.github.io">懐石温泉旅館まげわ</a></h1>
+            <h1 class="brand-title"><a href="http://localhost:1313">懐石温泉旅館まげわ</a></h1>
             <div class="brand-tagline"> 源泉掛け流し温泉宿の開発 </div>
         </hgroup>
 
         <nav class="nav">
             <ul class="nav-list">
                 <li class="nav-item">
-                    <a class="pure-button" href="https://magepa.github.io/about/"><i class="fa "></i>about</a>
+                    <a class="pure-button" href="http://localhost:1313/about/"><i class="fa "></i>about</a>
                 </li>
                 
                 <li class="nav-item">
@@ -54,11 +54,114 @@
             
             <div class="posts">
                 
+                <h1 class="content-subhead">2015/02/17, 07:23</h1>
+                <section class="post">
+                    <header class="post-header">
+
+                        <a href="http://localhost:1313/post/2015-02/hugo-github-procedure/" class="post-title">hugo でgithubにpushするまでの手順</a>
+
+                        <p class="post-meta">
+                            
+                            
+                        </p>
+                    </header>
+
+                    <div class="post-description">
+                        
+
+<h2 id="新規作成:e3cc5420968c78ceebb16451f13e4a39">新規作成</h2>
+
+<p>blog自体と同じく、新しいページはhugo newで作れます。</p>
+
+<p>$ hugo new hogehoge.md</p>
+
+<p>hogehogeに指定したファイル名でヘッダつきのファイルが作成されます。
+上の例では</p>
+
+<p>BLOG_TOP/contents/hogehoge.md</p>
+
+<p>が生成されます。
+hogehogeをパスから書くと、contents配下に勝手にディレクトリが作られて<br />
+テキトウにエントリをディレクトリで分類できるようになっています。</p>
+
+<p>2015年02月現在、ここで日本語のタイトルを指定すると<br />
+面倒な感じになるのでここではアルファベットにしておくといいみたいです。</p>
+
+<p>postしたエントリはdateに指定した日付で<br />
+勝手に時系列として処理されるようです。<br />
+変えることができるのか気が向いたら調べます。</p>
+
+<h2 id="ヘッダ:e3cc5420968c78ceebb16451f13e4a39">ヘッダ</h2>
+
+<p>作成したファイルはこんなことが書いてあるテキストファイルです。</p>
+
+<p>+++<br />
+  date = &ldquo;2015-02-17T07:23:09+09:00&rdquo;<br />
+  draft = true<br />
+  title = &ldquo;hogehoge&rdquo;</p>
+
+<p>+++</p>
+
+<p>titleを日本語にしたい時にはここでtitle=を書き換えます。<br />
+また、ファイル名をslug=で追加しておきます。</p>
+
+<p>title = &ldquo;ほげほげ&rdquo;<br />
+  slug = &ldquo;hogehoge&rdquo;</p>
+
+<p>あとは+++以下にmarkdownで本文を書きます。</p>
+
+<h2 id="プレビュー:e3cc5420968c78ceebb16451f13e4a39">プレビュー</h2>
+
+<p>生成は</p>
+
+<p>$ hugo</p>
+
+<p>でもできます。オプションでテーマを選んだりします。</p>
+
+<p>$ hugo server &ndash;buildDrafts</p>
+
+<p>とすると、contentsのしたに置いたファイルを<br />
+テキトウにやったあれこれをよきに計らってレンダリングしたうえで<br />
+localhost:1313でサーバが起動して、ブラウザで見えるようになります。</p>
+
+<p>私は普段</p>
+
+<p>$ hugo server &ndash;theme=&ldquo;purehugo&rdquo; &ndash;buildDrafts</p>
+
+<p>と実行しています。</p>
+
+<h2 id="修正:e3cc5420968c78ceebb16451f13e4a39">修正</h2>
+
+<p>hugo はbaseurlの挙動にやや不安定なところがあって、<br />
+config.tomlとかで指定しても&ndash;baseUrl=&ldquo;&ldquo;で指定しても<br />
+色々と気に食わない動きをします。</p>
+
+<p>探すとあちこちで文句いってる人が見つかりますが<br />
+今のところ解決した様子はなく、<br />
+ソース追っかけるのはあとにして生成されたファイルを置換して対処します。
+publicの下で</p>
+
+<p>$ find . -type f -name &lsquo;*.html&rsquo; -exec sed -i &ldquo;&rdquo; -e &rsquo;s/http:\/\/localhost:1313/https:\/\/hoge.github.io/g&rsquo; {} \;</p>
+
+<p>を実行すると<a href="http://localhost:1313をhttps://hoge.github.ioに置換してくれます。">http://localhost:1313をhttps://hoge.github.ioに置換してくれます。</a></p>
+
+<h2 id="commit-とpush:e3cc5420968c78ceebb16451f13e4a39">commit とpush</h2>
+
+<p>あとはpublicの下で更新したファイルをcommitしてpushするだけです。</p>
+
+<p>$ git add -A<br />
+ $ git push origin master</p>
+
+<p>あらかじめ自分のhote.github.ioをpublic のしたにcloneしておくと便利です。</p>
+
+                    </div>
+                </section>
+                
                 <h1 class="content-subhead">2015/02/15, 22:08</h1>
                 <section class="post">
                     <header class="post-header">
 
-                        <a href="https://magepa.github.io/post/my-first-hugo/" class="post-title">Hugo 始めました</a>
+                        <a href="http://localhost:1313/post/my-first-hugo/" class="post-title">Hugo 始めました</a>
 
                         <p class="post-meta">
                             
