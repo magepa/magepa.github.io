@@ -13,7 +13,7 @@
     <atom:link href="http://localhost:1313/index.xml" rel="self" type="application/rss+xml" />
     
     <item>
-      <title>hugo でgithubにpushするまでの手順</title>
+      <title>hugoでgithubにpushするまでの手順</title>
       <link>http://localhost:1313/post/2015-02/hugo-github-procedure/</link>
       <pubDate>Tue, 17 Feb 2015 07:23:09 JST</pubDate>
       
@@ -24,16 +24,19 @@
 
 &lt;p&gt;blog自体と同じく、新しいページはhugo newで作れます。&lt;/p&gt;
 
-&lt;p&gt;$ hugo new hogehoge.md&lt;/p&gt;
+&lt;pre&gt;&lt;code class=&#34;language-bash&#34;&gt;$ hugo new hogehoge.md
+&lt;/code&gt;&lt;/pre&gt;
 
 &lt;p&gt;hogehogeに指定したファイル名でヘッダつきのファイルが作成されます。
 上の例では&lt;/p&gt;
 
-&lt;p&gt;BLOG_TOP/contents/hogehoge.md&lt;/p&gt;
+&lt;pre&gt;&lt;code class=&#34;language-bash&#34;&gt;BLOG_TOP/content/hogehoge.md 
+&lt;/code&gt;&lt;/pre&gt;
 
 &lt;p&gt;が生成されます。
-hogehogeをパスから書くと、contents配下に勝手にディレクトリが作られて&lt;br /&gt;
-テキトウにエントリをディレクトリで分類できるようになっています。&lt;/p&gt;
+hogehogeをパスから書くと、content配下に勝手にディレクトリが作られて&lt;br /&gt;
+テキトウにエントリをディレクトリで分類できるようになっています。
+ふだんはcontent/postのしたに切っておくといいようです。&lt;/p&gt;
 
 &lt;p&gt;2015年02月現在、ここで日本語のタイトルを指定すると&lt;br /&gt;
 面倒な感じになるのでここではアルファベットにしておくといいみたいです。&lt;/p&gt;
@@ -46,18 +49,20 @@ hogehogeをパスから書くと、contents配下に勝手にディレクトリ�
 
 &lt;p&gt;作成したファイルはこんなことが書いてあるテキストファイルです。&lt;/p&gt;
 
-&lt;p&gt;+++&lt;br /&gt;
-  date = &amp;ldquo;2015-02-17T07:23:09+09:00&amp;rdquo;&lt;br /&gt;
-  draft = true&lt;br /&gt;
-  title = &amp;ldquo;hogehoge&amp;rdquo;&lt;/p&gt;
+&lt;pre&gt;&lt;code class=&#34;language-bash&#34;&gt;+++  
+date = &amp;quot;2015-02-17T07:23:09+09:00&amp;quot;  
+draft = true  
+title = &amp;quot;hogehoge&amp;quot;  
 
-&lt;p&gt;+++&lt;/p&gt;
++++
+&lt;/code&gt;&lt;/pre&gt;
 
 &lt;p&gt;titleを日本語にしたい時にはここでtitle=を書き換えます。&lt;br /&gt;
 また、ファイル名をslug=で追加しておきます。&lt;/p&gt;
 
-&lt;p&gt;title = &amp;ldquo;ほげほげ&amp;rdquo;&lt;br /&gt;
-  slug = &amp;ldquo;hogehoge&amp;rdquo;&lt;/p&gt;
+&lt;pre&gt;&lt;code class=&#34;language-bash&#34;&gt;title = &amp;quot;ほげほげ&amp;quot;  
+slug = &amp;quot;hogehoge&amp;quot;
+&lt;/code&gt;&lt;/pre&gt;
 
 &lt;p&gt;あとは+++以下にmarkdownで本文を書きます。&lt;/p&gt;
 
@@ -65,19 +70,22 @@ hogehogeをパスから書くと、contents配下に勝手にディレクトリ�
 
 &lt;p&gt;生成は&lt;/p&gt;
 
-&lt;p&gt;$ hugo&lt;/p&gt;
+&lt;pre&gt;&lt;code class=&#34;language-bash&#34;&gt;$ hugo
+&lt;/code&gt;&lt;/pre&gt;
 
 &lt;p&gt;でもできます。オプションでテーマを選んだりします。&lt;/p&gt;
 
-&lt;p&gt;$ hugo server &amp;ndash;buildDrafts&lt;/p&gt;
+&lt;pre&gt;&lt;code class=&#34;language-bash&#34;&gt;$ hugo server --buildDrafts
+&lt;/code&gt;&lt;/pre&gt;
 
 &lt;p&gt;とすると、contentsのしたに置いたファイルを&lt;br /&gt;
 テキトウにやったあれこれをよきに計らってレンダリングしたうえで&lt;br /&gt;
-localhost:1313でサーバが起動して、ブラウザで見えるようになります。&lt;/p&gt;
+localhost:1313 でサーバが起動して、ブラウザで見えるようになります。&lt;/p&gt;
 
 &lt;p&gt;私は普段&lt;/p&gt;
 
-&lt;p&gt;$ hugo server &amp;ndash;theme=&amp;ldquo;purehugo&amp;rdquo; &amp;ndash;buildDrafts&lt;/p&gt;
+&lt;pre&gt;&lt;code class=&#34;language-bash&#34;&gt;$ hugo server --theme=&amp;quot;purehugo&amp;quot; --buildDrafts
+&lt;/code&gt;&lt;/pre&gt;
 
 &lt;p&gt;と実行しています。&lt;/p&gt;
 
@@ -92,18 +100,20 @@ config.tomlとかで指定しても&amp;ndash;baseUrl=&amp;ldquo;&amp;ldquo;で�
 ソース追っかけるのはあとにして生成されたファイルを置換して対処します。
 publicの下で&lt;/p&gt;
 
-&lt;p&gt;$ find . -type f -name &amp;lsquo;*.html&amp;rsquo; -exec sed -i &amp;ldquo;&amp;rdquo; -e &amp;rsquo;s/http:\/\/localhost:1313/https:\/\/hoge.github.io/g&amp;rsquo; {} \;&lt;/p&gt;
+&lt;pre&gt;&lt;code class=&#34;language-bash&#34;&gt;$ find . -type f -name &#39;*.html&#39; -exec sed -i &amp;quot;&amp;quot; -e &#39;s/http:\/\/localhost:1313/https:\/\/hoge\.github\.io/g&#39; {} \;
+&lt;/code&gt;&lt;/pre&gt;
 
-&lt;p&gt;を実行すると&lt;a href=&#34;http://localhost:1313をhttps://hoge.github.ioに置換してくれます。&#34;&gt;http://localhost:1313をhttps://hoge.github.ioに置換してくれます。&lt;/a&gt;&lt;/p&gt;
+&lt;p&gt;を実行すると &lt;a href=&#34;http://localhost:1313&#34;&gt;http://localhost:1313&lt;/a&gt; を &lt;a href=&#34;https://hoge.github.io&#34;&gt;https://hoge.github.io&lt;/a&gt; に置換してくれます。&lt;/p&gt;
 
 &lt;h2 id=&#34;commit-とpush:e3cc5420968c78ceebb16451f13e4a39&#34;&gt;commit とpush&lt;/h2&gt;
 
 &lt;p&gt;あとはpublicの下で更新したファイルをcommitしてpushするだけです。&lt;/p&gt;
 
-&lt;p&gt;$ git add -A&lt;br /&gt;
- $ git push origin master&lt;/p&gt;
+&lt;pre&gt;&lt;code class=&#34;language-bash&#34;&gt;$ git add -A  
+$ git push origin master
+&lt;/code&gt;&lt;/pre&gt;
 
-&lt;p&gt;あらかじめ自分のhote.github.ioをpublic のしたにcloneしておくと便利です。&lt;/p&gt;
+&lt;p&gt;あらかじめ自分の hoge.github.io を public のしたに clone しておくと便利です。&lt;/p&gt;
 </description>
     </item>
     
@@ -133,7 +143,7 @@ golang 大好きとかもありますけどこう、&lt;br /&gt;
 &lt;pre&gt;&lt;code&gt;$ hugo  server --buildDrafts
 &lt;/code&gt;&lt;/pre&gt;
 
-&lt;p&gt;とかするとhtmlが生成されるのでそれをそのままgitにpushするだけです。&lt;br /&gt;
+&lt;p&gt;とかするとhtmlを生成してくれるので、それをそのままgithubにpushするだけです。&lt;br /&gt;
 octpressと比べるとデプロイのところが自動になってないのが面倒かもしれませんが&lt;br /&gt;
 gitだしそのうちシェルスクリプトにでもしようかなと。&lt;/p&gt;
 
