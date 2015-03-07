@@ -9,8 +9,896 @@
     
     
     
-    <lastBuildDate>Tue, 17 Feb 2015 07:23:09 JST</lastBuildDate>
+    <lastBuildDate>Sat, 07 Mar 2015 16:59:34 JST</lastBuildDate>
     <atom:link href="http://localhost:1313/index.xml" rel="self" type="application/rss+xml" />
+    
+    <item>
+      <title>BeagleBone Black向けにYocto 1.7 Dizzyをビルド</title>
+      <link>http://localhost:1313/post/2015-03/build-yocto/</link>
+      <pubDate>Sat, 07 Mar 2015 16:59:34 JST</pubDate>
+      
+      <guid>http://localhost:1313/post/2015-03/build-yocto/</guid>
+      <description>
+
+&lt;p&gt;この記事は&lt;a href=&#34;http://www.embarcados.com.br/beaglebone-black-yocto-dizzy-versao-1-7/&#34;&gt;Beaglebone Black + Yocto Dizzy (Versão 1.7)&lt;/a&gt; からの翻訳記事です。&lt;br /&gt;
+This entry is Japanese translate of &lt;a href=&#34;http://www.embarcados.com.br/beaglebone-black-yocto-dizzy-versao-1-7/&#34;&gt;Beaglebone Black + Yocto Dizzy (Versão 1.7)&lt;/a&gt;. thanks for Diego Sueiro.&lt;/p&gt;
+
+&lt;p&gt;Yocto 1.6についてはJCROMを作られている&lt;a href=&#34;https://twitter.com/androidsola&#34;&gt;@androidsora&lt;/a&gt;さんによる&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;&lt;a href=&#34;http://blog.sola-dolphin-1.net/archives/4632604.html&#34;&gt;Yocto を使用して BeagleBone Black のイメージを作成してみる&lt;/a&gt;&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;というありがたいエントリがあります。&lt;/p&gt;
+
+&lt;p&gt;内容はほとんど同じなのですが1.7のポルトガル語のページがあったので&lt;br /&gt;
+お勉強がてら翻訳してみました。&lt;/p&gt;
+
+&lt;p&gt;Yoct Project の新しいバージョン 1.7 (Dizzy) がリリースされました &lt;a href=&#34;https://www.yoctoproject.org/blogs/jefro/2014/yocto-project-introduces-yocto-project-17-%E2%80%9Cdizzy%E2%80%9D-release&#34;&gt;[1]&lt;/a&gt; 。Yoct Projectは一つ前の1.6 (daisy) &lt;a href=&#34;https://www.yoctoproject.org/blogs/jefro/2014/yocto-project-16-released&#34;&gt;[2]&lt;/a&gt; からBeagleBone Blackを公式にサポートしています。&lt;/p&gt;
+
+&lt;p&gt;そのため、BeagleBone Black で Yocto を使う際に、TI の BSP レイヤーを追加する必要はありません。しかし BeagleBone Black に搭載されている AM3359　の3Dハードウェアアクセラレータを使いたい場合には meta-ti が必要となります。&lt;/p&gt;
+
+&lt;p&gt;Linux カーネルが BeagleBone Black をサポートしたのは mainline のバージョン 3.12 以降であり、Yocto で使用しているのはそれから間もない 3.14 です。しかしこのバージョンでの Linux カーネルサポートでは capes &lt;a href=&#34;http://elinux.org/Beagleboard:BeagleBone_Capes&#34;&gt;[3]&lt;/a&gt; のサポートがない制限があります。capes を使用したい場合にはカーネル 3.8 を使用したBSP meta-Beagleboard &lt;a href=&#34;https://github.com/beagleboard/meta-beagleboard&#34;&gt;[4]&lt;/a&gt; が必要となります。&lt;/p&gt;
+
+&lt;p&gt;Yocto に初めて触れる方はまず　Henrique Rossi&lt;a href=&#34;http://www.embarcados.com.br/author/henriqueprossi/&#34;&gt;[6]&lt;/a&gt; による &amp;ldquo;What is the Yocto&amp;rdquo; in the article &amp;ldquo;BEAGLEBONE Black + Yocto&amp;rdquo; &lt;a href=&#34;http://www.embarcados.com.br/beaglebone-black-yocto/&#34;&gt;[5]&lt;/a&gt;　などをお読みください。&lt;/p&gt;
+
+&lt;h2 id=&#34;ホスト環境の準備:ca8a450968eda77741eec3a51646c624&#34;&gt;ホスト環境の準備&lt;/h2&gt;
+
+&lt;p&gt;Yocto Project で公式にサポートしている環境は以下の GNU/Linux 環境です。&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;Ubuntu 12:04, 13:10 and 14:04;&lt;/li&gt;
+&lt;li&gt;Fedora 19:20;&lt;/li&gt;
+&lt;li&gt;CentOS 6.4 and 6.5;&lt;/li&gt;
+&lt;li&gt;Debian 7.0, 7.1, 7.2, 7.3 and 7.4;&lt;/li&gt;
+&lt;li&gt;openSUSE 12.2, 12.3 and 13.1.&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;それぞれの環境で必要となるパッケージが異なります。&lt;/p&gt;
+
+&lt;p&gt;Ubuntu と Debian:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code&gt;sudo apt-get install gawk wget git-core diffstat unzip texinfo gcc-multilib \
+     build-essential chrpath libsdl1.2-dev xterm
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;Fedora:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code&gt;sudo yum install gawk make wget tar bzip2 gzip python unzip perl patch \
+     diffutils diffstat git cpp gcc gcc-c++ glibc-devel texinfo chrpath \
+     ccache perl-Data-Dumper perl-Text-ParseWords perl-Thread-Queue SDL-devel xterm
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;openSUSE:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code&gt;sudo zypper install python gcc gcc-c++ git chrpath make wget python-xml \
+     diffstat texinfo python-curses patch libSDL-devel xterm
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;CentOS:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code&gt;sudo yum install gawk make wget tar bzip2 gzip python unzip perl patch \
+     diffutils diffstat git cpp gcc gcc-c++ glibc-devel texinfo chrpath SDL-devel xterma
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;h2 id=&#34;ビルド環境の構築:ca8a450968eda77741eec3a51646c624&#34;&gt;ビルド環境の構築&lt;/h2&gt;
+
+&lt;p&gt;ホスト環境へのパッケージのインストールが済んだら、Yocto のディレクトリを作成してソースコードをダウンロードします。
+ここでは ~/yocto/dl とします。&lt;/p&gt;
+
+&lt;pre&gt;&lt;code&gt;mkdir -p ~/yocto/dl
+cd ~/yocto
+git clone -b dizzy git://git.yoctoproject.org/poky poky-dizzy
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;では開発環境をビルドしていきましょう。&lt;/p&gt;
+
+&lt;pre&gt;&lt;code&gt;cd ~/yocto
+source poky-dizzy/oe-init-build-env build-dizzy
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;終わったら、~/Yocto/build-dizzy/conf/local.conf　をエディタで開き、以下のように編集、追加します。&lt;/p&gt;
+
+&lt;pre&gt;&lt;code&gt;MACHINE ?= &amp;quot;beaglebone&amp;quot;
+DL_DIR ?= &amp;quot;${TOPDIR}/../dl&amp;quot;
+IMAGE_INSTALL_append = &amp;quot; kernel-modules kernel-devicetree&amp;quot;
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;この設定では MACHINE 名を　beaglebone (BeagleBone Black と Whieteどちらにも対応しています)　として、ダウンロードしたソースを他のプロジェクトで再利用するため、ダウンロードディレクトリを変更しています。また、こちらで生成したモジュールと dtb を追加しています。&lt;/p&gt;
+
+&lt;h2 id=&#34;イメージのビルド:ca8a450968eda77741eec3a51646c624&#34;&gt;イメージのビルド&lt;/h2&gt;
+
+&lt;p&gt;GUIを含まない、最小構成の  core-image-minimal を以下のコマンドで生成します:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code&gt;source poky-dizzy/oe-init-build-env build-dizzy
+bitbake core-image-minimal
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;こうしてビルドすると以下の設定となります。&lt;/p&gt;
+
+&lt;pre&gt;&lt;code&gt;Build Configuration:
+BB_VERSION        = &amp;quot;1.24.0&amp;quot;
+BUILD_SYS         = &amp;quot;x86_64-linux&amp;quot;
+NATIVELSBSTRING   = &amp;quot;Ubuntu-14.04&amp;quot;
+TARGET_SYS        = &amp;quot;arm-poky-linux-gnueabi&amp;quot;
+MACHINE           = &amp;quot;beaglebone&amp;quot;
+DISTRO            = &amp;quot;poky&amp;quot;
+DISTRO_VERSION    = &amp;quot;1.7.1&amp;quot;
+TUNE_FEATURES     = &amp;quot;arm armv7a vfp neon callconvention-hard cortexa8&amp;quot;
+TARGET_FPU        = &amp;quot;vfp-neon&amp;quot;
+meta
+meta-yocto
+meta-yocto-bsp    = &amp;quot;dizzy:9fc095a439c36014c73b3a8f240afba09fe0e4d7&amp;quot;
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;GUIを含むイメージのビルドでは以下のようにします&lt;/p&gt;
+
+&lt;pre&gt;&lt;code&gt;bitbake core-image-sato
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;h2 id=&#34;起動sdの生成:ca8a450968eda77741eec3a51646c624&#34;&gt;起動SDの生成&lt;/h2&gt;
+
+&lt;p&gt;ここからの手順は冒頭で紹介したチュートリアル　&lt;a href=&#34;http://www.embarcados.com.br/beaglebone-black-yocto/&#34;&gt;[5]&lt;/a&gt;　と同じ内容になります。&lt;/p&gt;
+
+&lt;p&gt;イメージを microSD カードに書き込むには、ボードが認識できるようにパーティーションを切ってフォーマットする必要があります。以下のコマンドで実行できるようスクリプトを作成しました。&lt;/p&gt;
+
+&lt;pre&gt;&lt;code&gt;cd ~/yocto/
+git clone https://github.com/henriqueprossi/beaglebone-black.git bbb-sdcard-prepare
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;microSD カードをホストPCに差し込み、システムのどのデバイスノードに追加されているか探してください。　　
+以下のコマンドのどちらかを試してみてください。&lt;/p&gt;
+
+&lt;pre&gt;&lt;code&gt;dmesg
+sudo fdisk -l
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;ここでは例として　/dev/sdb にある場合のコマンドを示します。&lt;/p&gt;
+
+&lt;pre&gt;&lt;code&gt;cd ~/yocto/bbb-sdcard-prepare/scripts
+chmod +x format_sd_card.sh
+sudo ./format_sd_card.sh /dev/sdb
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;パーティーション生成とフォーマットがおわると、microSD に日辰のパーティーションが作成されています。&lt;/p&gt;
+
+&lt;pre&gt;&lt;code&gt;boot (FAT32)
+rootfs (ext4)
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;ホストのファイルシステムで二つのパーティションに対して「解析」を実行します。Ubuntsu を使っている場合は単に一旦スロットから取り外し、もう一度挿入してください。mount point が /media/boot や /media/rootfs　になっていたら、以下のように生成したイメージを micoroSD にコピーします。&lt;/p&gt;
+
+&lt;pre&gt;&lt;code&gt;cd ~/yocto/build-dizzy/tmp/deploy/images/beaglebone
+cp MLO /media/boot
+cp u-boot.img /media/boot
+# core-image-minimal をコピーする場合
+sudo tar xjf core-image-minimal-beaglebone.tar.bz2 -C /media/rootfs ; sync
+# core-image-sato　をコピーする場合
+sudo tar xjf core-image-sato-beaglebone.tar.bz2 -C /media/rootfs ; sync 
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;最後のコマンド重要です。これを実行しないと USB に接続しているデバイスがカーネルには認識されません。&lt;/p&gt;
+
+&lt;h2 id=&#34;イメージのテスト:ca8a450968eda77741eec3a51646c624&#34;&gt;イメージのテスト&lt;/h2&gt;
+
+&lt;p&gt;PC　から microSD　を取り外し、BeagleBone Black に挿入してください。HDMI　ケーブルでTVに接続し、USB ポートにマウスを接続すると良いでしょう。起動のプロセスを見たい場合はシリアルケーブルも接続してください。&lt;a href=&#34;http://elinux.org/Beagleboard:BeagleBone_Black_Serial&#34;&gt;[7]&lt;/a&gt;&lt;/p&gt;
+
+&lt;p&gt;メモ:&lt;/p&gt;
+
+&lt;p&gt;BeagleBone Black の eMMC　に他の OS をインストールしている場合、microSD スロットの横にあるスイッチを押しながら起動してください。こうすると、CPUは eMMC の代わりに microSD　の MLO と u-boot から起動します。&lt;/p&gt;
+
+&lt;p&gt;core-image-minimal (GUIなし) は以下のログで起動します。&lt;/p&gt;
+
+&lt;pre&gt;&lt;code&gt;U-Boot SPL 2013.07 (Nov 02 2014 - 08:12:48)
+musb-hdrc: ConfigData=0xde (UTMI-8, dyn FIFOs, HB-ISO Rx, HB-ISO Tx, SoftConn)
+musb-hdrc: MHDRC RTL version 2.0
+musb-hdrc: setup fifo_mode 4
+musb-hdrc: 28/31 max ep, 16384/16384 memory
+USB Peripheral mode controller at 47401000 using PIO, IRQ 0
+musb-hdrc: ConfigData=0xde (UTMI-8, dyn FIFOs, HB-ISO Rx, HB-ISO Tx, SoftConn)
+musb-hdrc: MHDRC RTL version 2.0
+musb-hdrc: setup fifo_mode 4
+musb-hdrc: 28/31 max ep, 16384/16384 memory
+USB Host mode controller at 47401800 using PIO, IRQ 0
+OMAP SD/MMC: 0
+reading args
+spl: error reading image args, err - -1
+reading u-boot.img
+reading u-boot.img
+U-Boot 2013.07 (Nov 02 2014 - 08:12:48)
+I2C:   ready
+DRAM:  512 MiB
+WARNING: Caches not enabled
+NAND:  0 MiB
+MMC:   OMAP SD/MMC: 0, OMAP SD/MMC: 1
+*** Warning - readenv() failed, using default environment
+musb-hdrc: ConfigData=0xde (UTMI-8, dyn FIFOs, HB-ISO Rx, HB-ISO Tx, SoftConn)
+musb-hdrc: MHDRC RTL version 2.0
+musb-hdrc: setup fifo_mode 4
+musb-hdrc: 28/31 max ep, 16384/16384 memory
+USB Peripheral mode controller at 47401000 using PIO, IRQ 0
+musb-hdrc: ConfigData=0xde (UTMI-8, dyn FIFOs, HB-ISO Rx, HB-ISO Tx, SoftConn)
+musb-hdrc: MHDRC RTL version 2.0
+musb-hdrc: setup fifo_mode 4
+musb-hdrc: 28/31 max ep, 16384/16384 memory
+USB Host mode controller at 47401800 using PIO, IRQ 0
+Net:   &amp;lt;ethaddr&amp;gt; not set. Validating first E-fuse MAC
+cpsw, usb_ether
+Hit any key to stop autoboot:  0
+mmc0 is current device
+SD/MMC found on device 0
+reading uEnv.txt
+** Unable to read file uEnv.txt **
+5068072 bytes read in 896 ms (5.4 MiB/s)
+29192 bytes read in 47 ms (606.4 KiB/s)
+Booting from mmc ...
+## Booting kernel from Legacy Image at 82000000 ...
+   Image Name:   Linux-3.14.19-yocto-standard
+   Image Type:   ARM Linux Kernel Image (uncompressed)
+   Data Size:    5068008 Bytes = 4.8 MiB
+   Load Address: 80008000
+   Entry Point:  80008000
+   Verifying Checksum ... OK
+## Flattened Device Tree blob at 88000000
+   Booting using the fdt blob at 0x88000000
+   Loading Kernel Image ... OK
+   Loading Device Tree to 8fff5000, end 8ffff207 ... OK
+Starting kernel ...
+Booting Linux on physical CPU 0x0
+Initializing cgroup subsys cpuset
+Initializing cgroup subsys cpu
+Initializing cgroup subsys cpuacct
+Linux version 3.14.19-yocto-standard (dsueiro@dsueiro-N46VM) (gcc version 4.9.1 (GCC) ) #1 PREEMPT Sun Nov 2 08:10:58 BRST 2014
+CPU: ARMv7 Processor [413fc082] revision 2 (ARMv7), cr=10c53c7d
+CPU: PIPT / VIPT nonaliasing data cache, VIPT aliasing instruction cache
+Machine model: TI AM335x BeagleBone
+cma: CMA: reserved 16 MiB at 9e800000
+Memory policy: Data cache writeback
+CPU: All CPU(s) started in SVC mode.
+AM335X ES2.0 (sgx neon )
+Built 1 zonelists in Zone order, mobility grouping on.  Total pages: 129792
+Kernel command line: console=ttyO0,115200n8 root=/dev/mmcblk0p2 ro rootfstype=ext4 rootwait
+PID hash table entries: 2048 (order: 1, 8192 bytes)
+Dentry cache hash table entries: 65536 (order: 6, 262144 bytes)
+Inode-cache hash table entries: 32768 (order: 5, 131072 bytes)
+allocated 1048576 bytes of page_cgroup
+please try &#39;cgroup_disable=memory&#39; option if you don&#39;t want memory cgroups
+Memory: 489264K/523264K available (7631K kernel code, 522K rwdata, 2500K rodata, 491K init, 757K bss, 34000K reserved, 0K highmem)
+Virtual kernel memory layout:
+    vector  : 0xffff0000 - 0xffff1000   (   4 kB)
+    fixmap  : 0xfff00000 - 0xfffe0000   ( 896 kB)
+    vmalloc : 0xe0800000 - 0xff000000   ( 488 MB)
+    lowmem  : 0xc0000000 - 0xe0000000   ( 512 MB)
+    pkmap   : 0xbfe00000 - 0xc0000000   (   2 MB)
+    modules : 0xbf000000 - 0xbfe00000   (  14 MB)
+      .text : 0xc0008000 - 0xc09ecfd0   (10132 kB)
+      .init : 0xc09ed000 - 0xc0a67d64   ( 492 kB)
+      .data : 0xc0a68000 - 0xc0aea954   ( 523 kB)
+       .bss : 0xc0aea954 - 0xc0ba80c8   ( 758 kB)
+SLUB: HWalign=64, Order=0-3, MinObjects=0, CPUs=1, Nodes=1
+Preemptible hierarchical RCU implementation.
+NR_IRQS:16 nr_irqs:16 16
+IRQ: Found an INTC at 0xfa200000 (revision 5.0) with 128 interrupts
+Total of 128 interrupts on 1 active controller
+OMAP clockevent source: timer2 at 24000000 Hz
+sched_clock: 32 bits at 24MHz, resolution 41ns, wraps every 178956969942ns
+OMAP clocksource: timer1 at 24000000 Hz
+Console: colour dummy device 80x30
+Calibrating delay loop... 548.86 BogoMIPS (lpj=2744320)
+pid_max: default: 32768 minimum: 301
+Security Framework initialized
+Mount-cache hash table entries: 1024 (order: 0, 4096 bytes)
+Mountpoint-cache hash table entries: 1024 (order: 0, 4096 bytes)
+Initializing cgroup subsys debug
+Initializing cgroup subsys memory
+Initializing cgroup subsys devices
+Initializing cgroup subsys freezer
+Initializing cgroup subsys net_cls
+Initializing cgroup subsys blkio
+Initializing cgroup subsys vm
+CPU: Testing write buffer coherency: ok
+ftrace: allocating 25677 entries in 76 pages
+Setting up static identity map for 0x806e43d0 - 0x806e4428
+devtmpfs: initialized
+VFP support v0.3: implementor 41 architecture 3 part 30 variant c rev 3
+omap_hwmod: tptc0 using broken dt data from edma
+omap_hwmod: tptc1 using broken dt data from edma
+omap_hwmod: tptc2 using broken dt data from edma
+omap_hwmod: debugss: _wait_target_disable failed
+xor: measuring software checksum speed
+   arm4regs  :   685.200 MB/sec
+   8regs     :   504.400 MB/sec
+   32regs    :   658.400 MB/sec
+xor: using function: arm4regs (685.200 MB/sec)
+pinctrl core: initialized pinctrl subsystem
+regulator-dummy: no parameters
+NET: Registered protocol family 16
+DMA: preallocated 256 KiB pool for atomic coherent allocations
+cpuidle: using governor ladder
+cpuidle: using governor menu
+platform 49000000.edma: alias fck already exists
+platform 49000000.edma: alias fck already exists
+platform 49000000.edma: alias fck already exists
+OMAP GPIO hardware version 0.1
+hw-breakpoint: debug architecture 0x4 unsupported.
+bio: create slab &amp;lt;bio-0&amp;gt; at 0
+raid6: int32x1     82 MB/s
+raid6: int32x2    116 MB/s
+raid6: int32x4    100 MB/s
+raid6: int32x8     89 MB/s
+raid6: using algorithm int32x2 (116 MB/s)
+raid6: using intx1 recovery algorithm
+edma-dma-engine edma-dma-engine.0: TI EDMA DMA engine driver
+vmmcsd_fixed: 3300 mV
+SCSI subsystem initialized
+usbcore: registered new interface driver usbfs
+usbcore: registered new interface driver hub
+usbcore: registered new device driver usb
+omap_i2c 44e0b000.i2c: could not find pctldev for node /pinmux@44e10800/pinmux_i2c0_pins, deferring probe
+platform 44e0b000.i2c: Driver omap_i2c requests probe deferral
+cfg80211: Calling CRDA to update world regulatory domain
+Switched to clocksource timer1
+NET: Registered protocol family 2
+TCP established hash table entries: 4096 (order: 2, 16384 bytes)
+TCP bind hash table entries: 4096 (order: 2, 16384 bytes)
+TCP: Hash tables configured (established 4096 bind 4096)
+TCP: reno registered
+UDP hash table entries: 256 (order: 0, 4096 bytes)
+UDP-Lite hash table entries: 256 (order: 0, 4096 bytes)
+NET: Registered protocol family 1
+RPC: Registered named UNIX socket transport module.
+RPC: Registered udp transport module.
+RPC: Registered tcp transport module.
+RPC: Registered tcp NFSv4.1 backchannel transport module.
+hw perfevents: enabled with ARMv7 Cortex-A8 PMU driver, 5 counters available
+futex hash table entries: 256 (order: -1, 3072 bytes)
+NFS: Registering the id_resolver key type
+Key type id_resolver registered
+Key type id_legacy registered
+aufs 3.x-rcN-20140113
+msgmni has been set to 987
+Block layer SCSI generic (bsg) driver version 0.4 loaded (major 252)
+io scheduler noop registered
+io scheduler deadline registered
+io scheduler cfq registered (default)
+pinctrl-single 44e10800.pinmux: 142 pins at pa f9e10800 size 568
+omap_uart 44e09000.serial: no wakeirq for uart0
+44e09000.serial: ttyO0 at MMIO 0x44e09000 (irq = 88, base_baud = 3000000) is a OMAP UART0
+console [ttyO0] enabled
+[drm] Initialized drm 1.1.0 20060810
+brd: module loaded
+mtdoops: mtd device (mtddev=name/number) must be supplied
+usbcore: registered new interface driver kaweth
+pegasus: v0.9.3 (2013/04/25), Pegasus/Pegasus II USB Ethernet driver
+usbcore: registered new interface driver pegasus
+usbcore: registered new interface driver rtl8150
+usbcore: registered new interface driver asix
+usbcore: registered new interface driver ax88179_178a
+usbcore: registered new interface driver cdc_ether
+usbcore: registered new interface driver dm9601
+usbcore: registered new interface driver smsc75xx
+usbcore: registered new interface driver smsc95xx
+usbcore: registered new interface driver net1080
+usbcore: registered new interface driver cdc_subset
+usbcore: registered new interface driver zaurus
+usbcore: registered new interface driver MOSCHIP usb-ethernet driver
+usbcore: registered new interface driver int51x1
+usbcore: registered new interface driver cdc_ncm
+ehci_hcd: USB 2.0 &#39;Enhanced&#39; Host Controller (EHCI) Driver
+ehci-omap: OMAP-EHCI Host Controller driver
+usbcore: registered new interface driver usb-storage
+mousedev: PS/2 mouse device common for all mice
+omap_rtc 44e3e000.rtc: rtc core: registered 44e3e000.rtc as rtc0
+i2c /dev entries driver
+omap_wdt: OMAP Watchdog Timer Rev 0x01: initial timeout 60 sec
+48060000.mmc supply vmmc_aux not found, using dummy regulator
+481d8000.mmc supply vmmc_aux not found, using dummy regulator
+mmc0: host does not support reading read-only switch. assuming write-enable.
+usbcore: registered new interface driver usbhid
+usbhid: USB HID core driver
+oprofile: using arm/armv7
+mmc0: new high speed SDHC card at address b368
+u32 classifier
+    Actions configured
+TCP: cubic registered
+NET: Registered protocol family 10
+mmcblk0: mmc0:b368 SD8GB 7.48 GiB
+ mmcblk0: p1 p2
+sit: IPv6 over IPv4 tunneling driver
+NET: Registered protocol family 17
+Key type dns_resolver registered
+ThumbEE CPU extension supported.
+bio: create slab &amp;lt;bio-1&amp;gt; at 1
+Btrfs loaded
+regulator-dummy: disabling
+slave hdmi.6: could not get i2c
+platform hdmi.6: Driver slave requests probe deferral
+platform 4830e000.lcdc: Driver tilcdc requests probe deferral
+DCDC1: at 1500 mV
+vdd_mpu: 925 &amp;lt;--&amp;gt; 1325 mV at 1100 mV
+vdd_core: 925 &amp;lt;--&amp;gt; 1150 mV at 1100 mV
+LDO1: at 1800 mV
+LDO2: at 3300 mV
+LDO3: 1800 mV
+LDO4: at 3300 mV
+tps65217 0-0024: TPS65217 ID 0xe version 1.2
+omap_i2c 44e0b000.i2c: bus 0 rev0.11 at 400 kHz
+tilcdc 4830e000.lcdc: found TDA19988
+[drm] Supports vblank timestamp caching Rev 2 (21.10.2013).
+[drm] No driver support for vblank timestamp query.
+Console: switching to colour frame buffer device 240x67
+tilcdc 4830e000.lcdc: fb0:  frame buffer device
+tilcdc 4830e000.lcdc: registered panic notifier
+[drm] Initialized tilcdc 1.0.0 20121205 on minor 0
+console [netcon0] enabled
+netconsole: network logging started
+mmc1: BKOPS_EN bit is not set
+mmc1: new high speed MMC card at address 0001
+mmcblk1: mmc1:0001 MMC02G 1.78 GiB
+mmcblk1boot0: mmc1:0001 MMC02G partition 1 1.00 MiB
+davinci_mdio 4a101000.mdio: davinci mdio revision 1.6
+davinci_mdio 4a101000.mdio: detected phy mask fffffffe
+mmcblk1boot1: mmc1:0001 MMC02G partition 2 1.00 MiB
+libphy: 4a101000.mdio: probed
+ mmcblk1: p1 p2 p3 p4
+davinci_mdio 4a101000.mdio: phy[0]: device 4a101000.mdio:00, driver SMSC LAN8710/LAN8720
+ mmcblk1boot1: unknown partition table
+Detected MACID = c8:a0:30:b3:d5:d7
+omap_rtc 44e3e000.rtc: setting system clock to 2000-01-01 00:00:01 UTC (946684801)
+ mmcblk1boot0: unknown partition table
+EXT4-fs (mmcblk0p2): mounted filesystem with ordered data mode. Opts: (null)
+VFS: Mounted root (ext4 filesystem) readonly on device 179:2.
+devtmpfs: mounted
+Freeing unused kernel memory: 488K (c09ed000 - c0a67000)
+INIT: version 2.88 booting
+Starting udev
+udevd[78]: starting version 182
+47401300.usb-phy supply vcc not found, using dummy regulator
+47401b00.usb-phy supply vcc not found, using dummy regulator
+omap_rng 48310000.rng: OMAP Random Number Generator ver. 20
+random: nonblocking pool is initialized
+musb-hdrc musb-hdrc.0.auto: MUSB HDRC host driver
+musb-hdrc musb-hdrc.0.auto: new USB bus registered, assigned bus number 1
+hub 1-0:1.0: USB hub found
+hub 1-0:1.0: 1 port detected
+musb-hdrc musb-hdrc.1.auto: MUSB HDRC host driver
+musb-hdrc musb-hdrc.1.auto: new USB bus registered, assigned bus number 2
+hub 2-0:1.0: USB hub found
+hub 2-0:1.0: 1 port detected
+EXT4-fs (mmcblk0p2): re-mounted. Opts: data=ordered
+Populating dev cache
+Sun Nov  2 10:41:07 UTC 2014
+INIT: Entering runlevel: 5
+Configuring network interfaces... net eth0: initializing cpsw version 1.12 (0)
+net eth0: phy found : id is : 0x7c0f1
+libphy: PHY 4a101000.mdio:01 not found
+net eth0: phy 4a101000.mdio:01 not found on slave 1
+IPv6: ADDRCONF(NETDEV_UP): eth0: link is not ready
+udhcpc (v1.22.1) started
+Sending discover...
+Sending discover...
+Sending discover...
+No lease, forking to background
+done.
+Starting syslogd/klogd: done
+Poky (Yocto Project Reference Distro) 1.7 beaglebone /dev/ttyO0
+beaglebone login: 
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;core-image-sato (GUIあり) は以下のログで起動します。&lt;/p&gt;
+
+&lt;pre&gt;&lt;code&gt;U-Boot SPL 2013.07 (Nov 02 2014 - 08:12:48)
+musb-hdrc: ConfigData=0xde (UTMI-8, dyn FIFOs, HB-ISO Rx, HB-ISO Tx, SoftConn)
+musb-hdrc: MHDRC RTL version 2.0
+musb-hdrc: setup fifo_mode 4
+musb-hdrc: 28/31 max ep, 16384/16384 memory
+USB Peripheral mode controller at 47401000 using PIO, IRQ 0
+musb-hdrc: ConfigData=0xde (UTMI-8, dyn FIFOs, HB-ISO Rx, HB-ISO Tx, SoftConn)
+musb-hdrc: MHDRC RTL version 2.0
+musb-hdrc: setup fifo_mode 4
+musb-hdrc: 28/31 max ep, 16384/16384 memory
+USB Host mode controller at 47401800 using PIO, IRQ 0
+OMAP SD/MMC: 0
+reading args
+spl: error reading image args, err - -1
+reading u-boot.img
+reading u-boot.img
+U-Boot 2013.07 (Nov 02 2014 - 08:12:48)
+I2C:   ready
+DRAM:  512 MiB
+WARNING: Caches not enabled
+NAND:  0 MiB
+MMC:   OMAP SD/MMC: 0, OMAP SD/MMC: 1
+*** Warning - readenv() failed, using default environment
+musb-hdrc: ConfigData=0xde (UTMI-8, dyn FIFOs, HB-ISO Rx, HB-ISO Tx, SoftConn)
+musb-hdrc: MHDRC RTL version 2.0
+musb-hdrc: setup fifo_mode 4
+musb-hdrc: 28/31 max ep, 16384/16384 memory
+USB Peripheral mode controller at 47401000 using PIO, IRQ 0
+musb-hdrc: ConfigData=0xde (UTMI-8, dyn FIFOs, HB-ISO Rx, HB-ISO Tx, SoftConn)
+musb-hdrc: MHDRC RTL version 2.0
+musb-hdrc: setup fifo_mode 4
+musb-hdrc: 28/31 max ep, 16384/16384 memory
+USB Host mode controller at 47401800 using PIO, IRQ 0
+Net:   &amp;lt;ethaddr&amp;gt; not set. Validating first E-fuse MAC
+cpsw, usb_ether
+Hit any key to stop autoboot:  0
+mmc0 is current device
+SD/MMC found on device 0
+reading uEnv.txt
+** Unable to read file uEnv.txt **
+5068072 bytes read in 912 ms (5.3 MiB/s)
+29192 bytes read in 56 ms (508.8 KiB/s)
+Booting from mmc ...
+## Booting kernel from Legacy Image at 82000000 ...
+   Image Name:   Linux-3.14.19-yocto-standard
+   Image Type:   ARM Linux Kernel Image (uncompressed)
+   Data Size:    5068008 Bytes = 4.8 MiB
+   Load Address: 80008000
+   Entry Point:  80008000
+   Verifying Checksum ... OK
+## Flattened Device Tree blob at 88000000
+   Booting using the fdt blob at 0x88000000
+   Loading Kernel Image ... OK
+   Loading Device Tree to 8fff5000, end 8ffff207 ... OK
+Starting kernel ...
+Booting Linux on physical CPU 0x0
+Initializing cgroup subsys cpuset
+Initializing cgroup subsys cpu
+Initializing cgroup subsys cpuacct
+Linux version 3.14.19-yocto-standard (dsueiro@dsueiro-N46VM) (gcc version 4.9.1 (GCC) ) #1 PREEMPT Sun Nov 2 08:10:58 BRST 2014
+CPU: ARMv7 Processor [413fc082] revision 2 (ARMv7), cr=10c53c7d
+CPU: PIPT / VIPT nonaliasing data cache, VIPT aliasing instruction cache
+Machine model: TI AM335x BeagleBone
+cma: CMA: reserved 16 MiB at 9e800000
+Memory policy: Data cache writeback
+CPU: All CPU(s) started in SVC mode.
+AM335X ES2.0 (sgx neon )
+Built 1 zonelists in Zone order, mobility grouping on.  Total pages: 129792
+Kernel command line: console=ttyO0,115200n8 root=/dev/mmcblk0p2 ro rootfstype=ext4 rootwait
+PID hash table entries: 2048 (order: 1, 8192 bytes)
+Dentry cache hash table entries: 65536 (order: 6, 262144 bytes)
+Inode-cache hash table entries: 32768 (order: 5, 131072 bytes)
+allocated 1048576 bytes of page_cgroup
+please try &#39;cgroup_disable=memory&#39; option if you don&#39;t want memory cgroups
+Memory: 489264K/523264K available (7631K kernel code, 522K rwdata, 2500K rodata, 491K init, 757K bss, 34000K reserved, 0K highmem)
+Virtual kernel memory layout:
+    vector  : 0xffff0000 - 0xffff1000   (   4 kB)
+    fixmap  : 0xfff00000 - 0xfffe0000   ( 896 kB)
+    vmalloc : 0xe0800000 - 0xff000000   ( 488 MB)
+    lowmem  : 0xc0000000 - 0xe0000000   ( 512 MB)
+    pkmap   : 0xbfe00000 - 0xc0000000   (   2 MB)
+    modules : 0xbf000000 - 0xbfe00000   (  14 MB)
+      .text : 0xc0008000 - 0xc09ecfd0   (10132 kB)
+      .init : 0xc09ed000 - 0xc0a67d64   ( 492 kB)
+      .data : 0xc0a68000 - 0xc0aea954   ( 523 kB)
+       .bss : 0xc0aea954 - 0xc0ba80c8   ( 758 kB)
+SLUB: HWalign=64, Order=0-3, MinObjects=0, CPUs=1, Nodes=1
+Preemptible hierarchical RCU implementation.
+NR_IRQS:16 nr_irqs:16 16
+IRQ: Found an INTC at 0xfa200000 (revision 5.0) with 128 interrupts
+Total of 128 interrupts on 1 active controller
+OMAP clockevent source: timer2 at 24000000 Hz
+sched_clock: 32 bits at 24MHz, resolution 41ns, wraps every 178956969942ns
+OMAP clocksource: timer1 at 24000000 Hz
+Console: colour dummy device 80x30
+Calibrating delay loop... 548.86 BogoMIPS (lpj=2744320)
+pid_max: default: 32768 minimum: 301
+Security Framework initialized
+Mount-cache hash table entries: 1024 (order: 0, 4096 bytes)
+Mountpoint-cache hash table entries: 1024 (order: 0, 4096 bytes)
+Initializing cgroup subsys debug
+Initializing cgroup subsys memory
+Initializing cgroup subsys devices
+Initializing cgroup subsys freezer
+Initializing cgroup subsys net_cls
+Initializing cgroup subsys blkio
+Initializing cgroup subsys vm
+CPU: Testing write buffer coherency: ok
+ftrace: allocating 25677 entries in 76 pages
+Setting up static identity map for 0x806e43d0 - 0x806e4428
+devtmpfs: initialized
+VFP support v0.3: implementor 41 architecture 3 part 30 variant c rev 3
+omap_hwmod: tptc0 using broken dt data from edma
+omap_hwmod: tptc1 using broken dt data from edma
+omap_hwmod: tptc2 using broken dt data from edma
+omap_hwmod: debugss: _wait_target_disable failed
+xor: measuring software checksum speed
+   arm4regs  :   685.200 MB/sec
+   8regs     :   504.400 MB/sec
+   32regs    :   658.400 MB/sec
+xor: using function: arm4regs (685.200 MB/sec)
+pinctrl core: initialized pinctrl subsystem
+regulator-dummy: no parameters
+NET: Registered protocol family 16
+DMA: preallocated 256 KiB pool for atomic coherent allocations
+cpuidle: using governor ladder
+cpuidle: using governor menu
+platform 49000000.edma: alias fck already exists
+platform 49000000.edma: alias fck already exists
+platform 49000000.edma: alias fck already exists
+OMAP GPIO hardware version 0.1
+hw-breakpoint: debug architecture 0x4 unsupported.
+bio: create slab &amp;lt;bio-0&amp;gt; at 0
+raid6: int32x1     82 MB/s
+raid6: int32x2    116 MB/s
+raid6: int32x4    100 MB/s
+raid6: int32x8     89 MB/s
+raid6: using algorithm int32x2 (116 MB/s)
+raid6: using intx1 recovery algorithm
+edma-dma-engine edma-dma-engine.0: TI EDMA DMA engine driver
+vmmcsd_fixed: 3300 mV
+SCSI subsystem initialized
+usbcore: registered new interface driver usbfs
+usbcore: registered new interface driver hub
+usbcore: registered new device driver usb
+omap_i2c 44e0b000.i2c: could not find pctldev for node /pinmux@44e10800/pinmux_i2c0_pins, deferring probe
+platform 44e0b000.i2c: Driver omap_i2c requests probe deferral
+cfg80211: Calling CRDA to update world regulatory domain
+Switched to clocksource timer1
+NET: Registered protocol family 2
+TCP established hash table entries: 4096 (order: 2, 16384 bytes)
+TCP bind hash table entries: 4096 (order: 2, 16384 bytes)
+TCP: Hash tables configured (established 4096 bind 4096)
+TCP: reno registered
+UDP hash table entries: 256 (order: 0, 4096 bytes)
+UDP-Lite hash table entries: 256 (order: 0, 4096 bytes)
+NET: Registered protocol family 1
+RPC: Registered named UNIX socket transport module.
+RPC: Registered udp transport module.
+RPC: Registered tcp transport module.
+RPC: Registered tcp NFSv4.1 backchannel transport module.
+hw perfevents: enabled with ARMv7 Cortex-A8 PMU driver, 5 counters available
+futex hash table entries: 256 (order: -1, 3072 bytes)
+NFS: Registering the id_resolver key type
+Key type id_resolver registered
+Key type id_legacy registered
+aufs 3.x-rcN-20140113
+msgmni has been set to 987
+Block layer SCSI generic (bsg) driver version 0.4 loaded (major 252)
+io scheduler noop registered
+io scheduler deadline registered
+io scheduler cfq registered (default)
+pinctrl-single 44e10800.pinmux: 142 pins at pa f9e10800 size 568
+omap_uart 44e09000.serial: no wakeirq for uart0
+44e09000.serial: ttyO0 at MMIO 0x44e09000 (irq = 88, base_baud = 3000000) is a OMAP UART0
+console [ttyO0] enabled
+[drm] Initialized drm 1.1.0 20060810
+brd: module loaded
+mtdoops: mtd device (mtddev=name/number) must be supplied
+usbcore: registered new interface driver kaweth
+pegasus: v0.9.3 (2013/04/25), Pegasus/Pegasus II USB Ethernet driver
+usbcore: registered new interface driver pegasus
+usbcore: registered new interface driver rtl8150
+usbcore: registered new interface driver asix
+usbcore: registered new interface driver ax88179_178a
+usbcore: registered new interface driver cdc_ether
+usbcore: registered new interface driver dm9601
+usbcore: registered new interface driver smsc75xx
+usbcore: registered new interface driver smsc95xx
+usbcore: registered new interface driver net1080
+usbcore: registered new interface driver cdc_subset
+usbcore: registered new interface driver zaurus
+usbcore: registered new interface driver MOSCHIP usb-ethernet driver
+usbcore: registered new interface driver int51x1
+usbcore: registered new interface driver cdc_ncm
+ehci_hcd: USB 2.0 &#39;Enhanced&#39; Host Controller (EHCI) Driver
+ehci-omap: OMAP-EHCI Host Controller driver
+usbcore: registered new interface driver usb-storage
+mousedev: PS/2 mouse device common for all mice
+omap_rtc 44e3e000.rtc: rtc core: registered 44e3e000.rtc as rtc0
+i2c /dev entries driver
+omap_wdt: OMAP Watchdog Timer Rev 0x01: initial timeout 60 sec
+48060000.mmc supply vmmc_aux not found, using dummy regulator
+481d8000.mmc supply vmmc_aux not found, using dummy regulator
+mmc0: host does not support reading read-only switch. assuming write-enable.
+usbcore: registered new interface driver usbhid
+usbhid: USB HID core driver
+oprofile: using arm/armv7
+mmc0: new high speed SDHC card at address b368
+u32 classifier
+    Actions configured
+TCP: cubic registered
+NET: Registered protocol family 10
+mmcblk0: mmc0:b368 SD8GB 7.48 GiB
+ mmcblk0: p1 p2
+sit: IPv6 over IPv4 tunneling driver
+NET: Registered protocol family 17
+Key type dns_resolver registered
+ThumbEE CPU extension supported.
+bio: create slab &amp;lt;bio-1&amp;gt; at 1
+Btrfs loaded
+regulator-dummy: disabling
+slave hdmi.6: could not get i2c
+platform hdmi.6: Driver slave requests probe deferral
+platform 4830e000.lcdc: Driver tilcdc requests probe deferral
+DCDC1: at 1500 mV
+vdd_mpu: 925 &amp;lt;--&amp;gt; 1325 mV at 1100 mV
+vdd_core: 925 &amp;lt;--&amp;gt; 1150 mV at 1100 mV
+LDO1: at 1800 mV
+LDO2: at 3300 mV
+LDO3: 1800 mV
+LDO4: at 3300 mV
+tps65217 0-0024: TPS65217 ID 0xe version 1.2
+omap_i2c 44e0b000.i2c: bus 0 rev0.11 at 400 kHz
+tilcdc 4830e000.lcdc: found TDA19988
+[drm] Supports vblank timestamp caching Rev 2 (21.10.2013).
+[drm] No driver support for vblank timestamp query.
+Console: switching to colour frame buffer device 240x67
+tilcdc 4830e000.lcdc: fb0:  frame buffer device
+tilcdc 4830e000.lcdc: registered panic notifier
+[drm] Initialized tilcdc 1.0.0 20121205 on minor 0
+console [netcon0] enabled
+netconsole: network logging started
+mmc1: BKOPS_EN bit is not set
+mmc1: new high speed MMC card at address 0001
+mmcblk1: mmc1:0001 MMC02G 1.78 GiB
+mmcblk1boot0: mmc1:0001 MMC02G partition 1 1.00 MiB
+davinci_mdio 4a101000.mdio: davinci mdio revision 1.6
+davinci_mdio 4a101000.mdio: detected phy mask fffffffe
+mmcblk1boot1: mmc1:0001 MMC02G partition 2 1.00 MiB
+libphy: 4a101000.mdio: probed
+ mmcblk1: p1 p2 p3 p4
+davinci_mdio 4a101000.mdio: phy[0]: device 4a101000.mdio:00, driver SMSC LAN8710/LAN8720
+ mmcblk1boot1: unknown partition table
+Detected MACID = c8:a0:30:b3:d5:d7
+omap_rtc 44e3e000.rtc: setting system clock to 2000-01-01 00:00:01 UTC (946684801)
+ mmcblk1boot0: unknown partition table
+EXT4-fs (mmcblk0p2): mounted filesystem with ordered data mode. Opts: (null)
+VFS: Mounted root (ext4 filesystem) readonly on device 179:2.
+devtmpfs: mounted
+Freeing unused kernel memory: 488K (c09ed000 - c0a67000)
+INIT: version 2.88 booting
+Starting udev
+udevd[81]: starting version 182
+47401300.usb-phy supply vcc not found, using dummy regulator
+47401b00.usb-phy supply vcc not found, using dummy regulator
+omap_rng 48310000.rng: OMAP Random Number Generator ver. 20
+random: nonblocking pool is initialized
+EXT4-fs (mmcblk1p4): recovery complete
+FAT-fs (mmcblk0p1): Volume was not properly unmounted. Some data may be corrupt. Please run fsck.
+EXT4-fs (mmcblk1p4): mounted filesystem with ordered data mode. Opts: (null)
+musb-hdrc musb-hdrc.0.auto: MUSB HDRC host driver
+musb-hdrc musb-hdrc.0.auto: new USB bus registered, assigned bus number 1
+hub 1-0:1.0: USB hub found
+hub 1-0:1.0: 1 port detected
+musb-hdrc musb-hdrc.1.auto: MUSB HDRC host driver
+musb-hdrc musb-hdrc.1.auto: new USB bus registered, assigned bus number 2
+hub 2-0:1.0: USB hub found
+hub 2-0:1.0: 1 port detected
+EXT4-fs (mmcblk1p3): recovery complete
+EXT4-fs (mmcblk1p3): mounted filesystem with ordered data mode. Opts: (null)
+usb 2-1: new low-speed USB device number 2 using musb-hdrc
+input: Areson USB Device as /devices/ocp.3/47400000.usb/47401c00.usb/musb-hdrc.1.auto/usb2/2-1/2-1:1.0/0003:04B4:0060.0001/input/input0
+hid-generic 0003:04B4:0060.0001: input: USB HID v1.00 Mouse [Areson USB Device] on usb-musb-hdrc.1.auto-1/input0
+hid-generic 0003:04B4:0060.0002: device has no listeners, quitting
+EXT4-fs (mmcblk1p2): recovery complete
+EXT4-fs (mmcblk1p2): mounted filesystem with ordered data mode. Opts: (null)
+EXT4-fs (mmcblk0p2): re-mounted. Opts: data=ordered
+Populating dev cache
+ALSA: Restoring mixer settings...
+/usr/sbin/alsactl: load_state:1729: No soundcards found...
+Sun Nov  2 11:26:54 UTC 2014
+INIT: Entering runlevel: 5
+Configuring network interfaces... net eth0: initializing cpsw version 1.12 (0)
+net eth0: phy found : id is : 0x7c0f1
+libphy: PHY 4a101000.mdio:01 not found
+net eth0: phy 4a101000.mdio:01 not found on slave 1
+IPv6: ADDRCONF(NETDEV_UP): eth0: link is not ready
+done.
+Starting system message bus: dbus.
+Starting Connection Manager
+Starting Xserver
+Starting Dropbear SSH server:
+Generating key, this may take a while...
+X.Org X Server 1.15.1
+Release Date: 2014-04-13
+X Protocol Version 11, Revision 0
+Build Operating System: Linux 3.13.0-29-generic x86_64
+Current Operating System: Linux beaglebone 3.14.19-yocto-standard #1 PREEMPT Sun Nov 2 08:10:58 BRST 2014 armv7l
+Kernel command line: console=ttyO0,115200n8 root=/dev/mmcblk0p2 ro rootfstype=ext4 rootwait
+Build Date: 02 November 2014  09:07:29AM
+Current version of pixman: 0.32.6
+        Before reporting problems, check http://wiki.x.org
+        to make sure that you have the latest version.
+Markers: (--) probed, (**) from config file, (==) default setting,
+        (++) from command line, (!!) notice, (II) informational,
+        (WW) warning, (EE) error, (NI) not implemented, (??) unknown.
+(==) Log file: &amp;quot;/var/log/Xorg.0.log&amp;quot;, Time: Sun Nov  2 11:26:55 2014
+(==) Using system config directory &amp;quot;/usr/share/X11/xorg.conf.d&amp;quot;
+Initializing built-in extension Generic Event Extension
+Initializing built-in extension SHAPE
+Initializing built-in extension MIT-SHM
+Initializing built-in extension XInputExtension
+Initializing built-in extension XTEST
+Initializing built-in extension BIG-REQUESTS
+Initializing built-in extension SYNC
+Initializing built-in extension XKEYBOARD
+Initializing built-in extension XC-MISC
+Initializing built-in extension XFIXES
+Initializing built-in extension RENDER
+Initializing built-in extension RANDR
+Initializing built-in extension COMPOSITE
+Initializing built-in extension DAMAGE
+Initializing built-in extension MIT-SCREEN-SAVER
+Initializing built-in extension DOUBLE-BUFFER
+Initializing built-in extension DPMS
+Initializing built-in extension Present
+Initializing built-in extension X-Resource
+Initializing built-in extension XVideo
+Initializing built-in extension XVideo-MotionCompensation
+Initializing built-in extension XFree86-VidModeExtension
+Initializing built-in extension XFree86-DGA
+Initializing built-in extension XFree86-DRI
+Initializing built-in extension DRI2
+tilcdc 4830e000.lcdc: timeout waiting for framedone
+D-BUS per-session daemon address is: unix:abstract=/tmp/dbus-o4klvcTnFA,guid=264da5d515f2d0ff5810b95f54561501
+matchbox: Cant find a keycode for keysym 269025056
+matchbox: ignoring key shortcut XF86Calendar=!$contacts
+matchbox: Cant find a keycode for keysym 2809
+matchbox: ignoring key shortcut telephone=!$dates
+matchbox: Cant find a keycode for keysym 269025050
+matchbox: ignoring key shortcut XF86Start=!matchbox-remote -desktop
+[settings daemon] Forking. run with -n to prevent fork
+** (matchbox-panel:832): WARNING **: Failed to load applet &amp;quot;battery&amp;quot; (/usr/lib/matchbox-panel/libbattery.so: cannot open shared object file: No .
+Public key portion is:
+ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQCiUfu/dtU5S1006LGmsyQq2ipfKJ5UZ2OwyFMtI7g7+xyhyFtGONG+slzuHDqcdwTkQ5Kqjxzs+2I0FJq9wkKkrbjxC/6RvRWIq8HzDHase
+Fingerprint: md5 e3:f9:c0:21:8e:68:e7:0b:02:27:99:1a:1a:16:8b:46
+dropbear.
+Starting rpcbind daemon...done.
+Starting syslogd/klogd: done
+ * Starting Avahi mDNS/DNS-SD Daemon: avahi-daemon
+   ...done.
+Starting Telephony daemon
+Starting Linux NFC daemon
+Poky (Yocto Project Reference Distro) 1.7 beaglebone /dev/ttyO0
+beaglebone login: 
+&lt;/code&gt;&lt;/pre&gt;
+</description>
+    </item>
+    
+    <item>
+      <title>MacOSX の VirtualBoxにDebian7.8(whzzy)をインストール</title>
+      <link>http://localhost:1313/post/2015-03/install-debian-78-whzzy-into-virtualbox-on-macosx/</link>
+      <pubDate>Sat, 07 Mar 2015 00:38:37 JST</pubDate>
+      
+      <guid>http://localhost:1313/post/2015-03/install-debian-78-whzzy-into-virtualbox-on-macosx/</guid>
+      <description>
+
+&lt;p&gt;単なるインストール記録です。&lt;/p&gt;
+
+&lt;h2 id=&#34;virtualbox:5125b997b70ec78c391f719202366702&#34;&gt;VirtualBox&lt;/h2&gt;
+
+&lt;p&gt;何はともあれ開発環境が必要なので、VirtualBoxを用意しました。&lt;br /&gt;
+以前はヘタレてUbuntsuなどを入れていたのですが&lt;br /&gt;
+13ぐらいでイライラが絶頂に達したので Debian/GNU Linuxを入れることに。&lt;/p&gt;
+
+&lt;p&gt;最近のVirtualBoxはインストールしたらほぼ何も設定しなくても&lt;br /&gt;
+NAT でネットワーク繋がるので、設定したのはHDのサイズぐらいのものです。&lt;br /&gt;
+すばらしい。Sunに感謝。太陽に感謝。&lt;/p&gt;
+
+&lt;h2 id=&#34;debian-gnu-linux:5125b997b70ec78c391f719202366702&#34;&gt;Debian/GNU Linux&lt;/h2&gt;
+
+&lt;p&gt;google先生でdebian ダウンロード　検索！&lt;br /&gt;
+とやってでてきた &lt;a href=&#34;http://cdimage.debian.or.jp/&#34;&gt;Debian &amp;ldquo;wheezy&amp;rdquo; インストールCD/DVD用イメージ&lt;/a&gt;から&lt;/p&gt;
+
+&lt;p&gt;PC/サーバー用 netinstイメージ 64 bit(amd64)&lt;/p&gt;
+
+&lt;p&gt;となっていた debian-7.8.0-amd64-netinst.iso をダウンロードしました。&lt;/p&gt;
+
+&lt;p&gt;インストールも簡単になっていてひとまずは何も考えず&lt;br /&gt;
+SSHだけいれたデスクトップをxfaceで入れました。&lt;br /&gt;
+最小構成で入れるとビルドのときにあれもこれもなくて大変というヘタレな理由です。&lt;/p&gt;
+
+&lt;p&gt;というわけでインストールはあっさり終了。
+だいたいほったらかしで2時間ぐらいでしたでしょうか。&lt;/p&gt;
+
+&lt;h2 id=&#34;最低限の設定:5125b997b70ec78c391f719202366702&#34;&gt;最低限の設定&lt;/h2&gt;
+
+&lt;p&gt;sudoの設定して、コンパイル二とにかく時間がかかるのでスクリーンセーバーを停止しておきました。
+徐々に環境構築していきます。&lt;/p&gt;
+</description>
+    </item>
     
     <item>
       <title>hugoでgithubにpushするまでの手順</title>
