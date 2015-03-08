@@ -9,8 +9,192 @@
     
     
     
-    <lastBuildDate>Sat, 07 Mar 2015 16:59:34 JST</lastBuildDate>
+    <lastBuildDate>Sun, 08 Mar 2015 19:42:21 JST</lastBuildDate>
     <atom:link href="http://localhost:1313/index.xml" rel="self" type="application/rss+xml" />
+    
+    <item>
+      <title>ビルドしたYoct1.7のイメージでBeagleBone Blackを起動</title>
+      <link>http://localhost:1313/post/2015-03/boot-yoct/</link>
+      <pubDate>Sun, 08 Mar 2015 19:42:21 JST</pubDate>
+      
+      <guid>http://localhost:1313/post/2015-03/boot-yoct/</guid>
+      <description>
+
+&lt;p&gt;実際にビルドして起動してみました。&lt;/p&gt;
+
+&lt;p&gt;Yoctoの公式サポート環境ではありませんが、Debian GNU/Linux 7.8 (whzzy)でクロス環境構築からビルドまでを実行しました。&lt;/p&gt;
+
+&lt;p&gt;実施手順はほぼ昨日翻訳した記事の通りです。&lt;/p&gt;
+
+&lt;h2 id=&#34;ホスト環境:948f38676c61807d74ff352b8055872d&#34;&gt;ホスト環境&lt;/h2&gt;
+
+&lt;p&gt;aptでインストール一発です。&lt;/p&gt;
+
+&lt;pre&gt;&lt;code&gt;$ sudo apt-get install gawk wget git-core diffstat unzip texinfo gcc-multilib \
+     build-essential chrpath libsdl1.2-dev xterm
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;これはVirtual Box 環境でも30分もあれば終わるでしょう。&lt;/p&gt;
+
+&lt;h2 id=&#34;クロス環境構築:948f38676c61807d74ff352b8055872d&#34;&gt;クロス環境構築&lt;/h2&gt;
+
+&lt;pre&gt;&lt;code&gt;$ mkdir -p ~/yocto/dl
+$ cd ~/yocto
+$ git clone -b dizzy git://git.yoctoproject.org/poky poky-dizzy
+$
+$ cd ~/yocto
+$ source poky-dizzy/oe-init-build-env build-dizzy
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;これでクロス環境のビルドがはじまります。&lt;br /&gt;
+toolchain を作るのに必要な環境を構築してくれます。&lt;br /&gt;
+動きとしては makefile  のお化けみたいなレシピに&lt;br /&gt;
+ダウンロードするパッケージと、それに当てるパッチのダウンロードリスト、&lt;br /&gt;
+当てる順番、ビルドする順序などがかかれていて、順番に実行てくれます。&lt;/p&gt;
+
+&lt;p&gt;Core i5 のMac miniにのせた Virtual Box 上 の Debianでは3時間ぐらいでした。&lt;/p&gt;
+
+&lt;h2 id=&#34;toolchain-のビルドとイメージのビルド:948f38676c61807d74ff352b8055872d&#34;&gt;Toolchain のビルドとイメージのビルド&lt;/h2&gt;
+
+&lt;p&gt;~/Yocto/build-dizzy/conf/local.conf を編集して以下を追加します。&lt;/p&gt;
+
+&lt;pre&gt;&lt;code&gt;MACHINE ?= &amp;quot;beaglebone&amp;quot;
+DL_DIR ?= &amp;quot;${TOPDIR}/../dl&amp;quot;
+IMAGE_INSTALL_append = &amp;quot; kernel-modules kernel-devicetree&amp;quot;
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;これを保存して、最小構成でビルドします&lt;/p&gt;
+
+&lt;pre&gt;&lt;code&gt;source poky-dizzy/oe-init-build-env build-dizzy
+bitbake core-image-minimal
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;これは5時間ぐらいかかりました。&lt;br /&gt;
+やっているのはpokyのビルドとほとんど同じ内容の繰り返しです。&lt;br /&gt;
+BeagleBone Blackのクロス環境の構築に必要なソースとpatchをダウンロードしてパッチを適用してビルド、&lt;br /&gt;
+プリローダーとu-boot のソースと必要なpatchをダウンロードしてビルド、&lt;br /&gt;
+カーネルソースとBSP、当てるpatchをダウンロードしてビルド、&lt;br /&gt;
+rootfsを構築してインストールするパッケージと当てるpatchをダウンロードしてビルドインストールして&lt;br /&gt;
+rootfsのイメージを圧縮します。&lt;/p&gt;
+
+&lt;p&gt;というわけでこのコマンドだけで独自ビルドのカーネルのベースが出来上がります。&lt;/p&gt;
+
+&lt;p&gt;以前はこの作業一個一個手でやって、クロス環境のこっちでの依存関係と&lt;br /&gt;
+あっちでの依存関係とか、相性とか疑いならやっていたことを考えると&lt;br /&gt;
+こんなレベルの記述でいいのかと思ったりもしてしまいますが&lt;br /&gt;
+ようやくこういう時代になったか。。という気がしないでもありません。&lt;/p&gt;
+
+&lt;p&gt;中でもクロス環境が何も考えずにできる、というのがYoctoのいいとこで、
+クロス環境があらかじめある程度テストされているので&lt;br /&gt;
+その辺を疑わずにすむのは気分的に相当楽です。&lt;/p&gt;
+
+&lt;p&gt;レシピやBSPはYocto のお作法にのっとっていじれば基盤が変わっても使えたりしますし&lt;br /&gt;
+お作法を覚えなくともカーネル弄ってリビルドする環境までできるので&lt;br /&gt;
+とっかかりには良いと思います。&lt;br /&gt;
+もちろんそれには、BSPがカーネルでサポートされているか、
+Yoctoでサポートされている必要があるのでどんな環境でも行けるわけではありません。&lt;br /&gt;
+オープンなHW環境が増えればいいなと思います。&lt;/p&gt;
+
+&lt;h2 id=&#34;virtualboxからmicrosdカードにアクセスする:948f38676c61807d74ff352b8055872d&#34;&gt;VirtualBoxからmicroSDカードにアクセスする&lt;/h2&gt;
+
+&lt;p&gt;仮想環境から実デバイスへの書き込みも、以前は本当に無理でしたが&lt;br /&gt;
+ググリテラリシさえあればなんとなる世の中になりました。&lt;/p&gt;
+
+&lt;p&gt;Mac Book とか Mac mini のSDカードスロットを使うときにはraw.vmdkとかを使えばできます。
+Mac内臓の SD カードスロットを使わずに USB 接続のカードリーダーを使えばあっさりできます。&lt;br /&gt;
+SD カードスロットを使う方法については&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;&lt;a href=&#34;http://qiita.com/key/items/1bb2e4f061446c667c07&#34;&gt;MacBook ProのSDカードスロットをVirtualBoxのrawdiskとして使う&lt;/a&gt;&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;に情報はありますが、OSのバージョンが違うのか若干うまくいかないものがありました。アンマウントするタイミングがいくつか抜けているのと、Mountain Lion 以降では　いろいろなタイミングでauto mount 走ってしまってうまくいきません。&lt;/p&gt;
+
+&lt;p&gt;情報としては&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;&lt;a href=&#34;http://superuser.com/questions/373463/how-to-access-an-sd-card-from-a-virtual-machine&#34;&gt;How to access an SD card from a virtual machine?　- Super User&lt;/a&gt;&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;にあるのが確度が高いと思います。&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;Virtual Boxを終了する&lt;/li&gt;
+&lt;li&gt;SD カードをスロットに刺す&lt;/li&gt;
+&lt;li&gt;Terminalでmountを実行してデバイス名(/dev/****)を取得&lt;/li&gt;
+&lt;li&gt;ディスクユーティリティーを起動&lt;/li&gt;
+&lt;li&gt;ディスクユーティリティーで右クリック、SD をUnmountする(取り出しではない）&lt;/li&gt;
+&lt;li&gt;デバイスの所有者を実行ユーザーにして、モードを777にする
+デバイスがdisk1の場合は以下のようにします。&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;pre&gt;&lt;code&gt;$ sudo chown YOUR_USER_NAME /dev/disk1* 
+$ sudo chmode 777 /dev/disk1*
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;ul&gt;
+&lt;li&gt;vmdkを生成する&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;pre&gt;&lt;code&gt;$ cd ~/VirtualBox\ VMs/SomeVM/
+$ sudo VBoxManage internalcommands createrawvmdk -filename ./raw.vmdk -rawdisk /dev/disk1
+$ sudo chown YOUR_USER_NAME raw.vmdk
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;ul&gt;
+&lt;li&gt;VirtualBoxを起動。VMのストレージに生成したvmdkファイルを設定する&lt;/li&gt;
+&lt;li&gt;ゲストOSを起動。&lt;/li&gt;
+&lt;li&gt;MacOSX10.8以降の場合以下を実行してauto mount を止める&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;pre&gt;&lt;code&gt;$ sudo launchctl list | grep diskarbitrationd
+188 - com.apple.diskarbitrationd 
+$ sudo kill -SIGSTOP 188 # automountを停止
+$ sudo kill -SIGCONT 188 # automountを再開
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;automount停止のと再開の間にディスクユーティリティーをactiveにするとハングアップすることがありました。大体は再開の方のコマンドを実行すると元に戻ります。
+* ゲストOSで必要な操作を実行する
+* automountを停止したばあいは再開のコマンドで元に戻す&lt;/p&gt;
+
+&lt;p&gt;USB のカードリーダーを使うと、この工程全部すっ飛ばして、ゲストOSでの操作だけやればOKです。&lt;br /&gt;
+ゲストOSでのデバイス名だけが異なります。&lt;/p&gt;
+
+&lt;h2 id=&#34;sd-のフォーマットと書き込み:948f38676c61807d74ff352b8055872d&#34;&gt;SD のフォーマットと書き込み&lt;/h2&gt;
+
+&lt;p&gt;手順通りで何もありません。
+デバイス名だけ /dev/sdbかどうか確認してください。&lt;/p&gt;
+
+&lt;pre&gt;&lt;code&gt;cd ~/yocto/
+git clone https://github.com/henriqueprossi/beaglebone-black.git bbb-sdcard-prepare
+cd ~/yocto/bbb-sdcard-prepare/scripts
+chmod +x format_sd_card.sh
+sudo ./format_sd_card.sh /dev/sdb
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;サイズによってはフォーマットの最後で終了せずにエラーで終わることもあるみたいです。
+フォーマット終了後に/mnt/bootと/mnt/rootfsがmount されたら大体成功しています。&lt;/p&gt;
+
+&lt;p&gt;書き込みは~/yocto/build-dizzy/tmp/deploy/images/beaglebone&lt;br /&gt;
+にできているイメージを書き込むだけです。&lt;br /&gt;
+ここにビルドした MLO, u-boot, カーネル、rootfs  が保存されています。&lt;br /&gt;
+細かくは後ほど。&lt;/p&gt;
+
+&lt;p&gt;SD はbootとカーネル以降格納用に分割されているので基本コピーするだけです。&lt;/p&gt;
+
+&lt;pre&gt;&lt;code&gt;cd ~/yocto/build-dizzy/tmp/deploy/images/beaglebone
+cp MLO /media/boot
+cp u-boot.img /media/boot
+# core-image-minimal をコピーする場合
+sudo tar xjf core-image-minimal-beaglebone.tar.bz2 -C /media/rootfs ; sync
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;としたmicroSDをBeagle Bone Blackに挿入し、&lt;br /&gt;
+ボタンを押しながら起動すると、Yoctoで生成した環境で起動します。&lt;/p&gt;
+
+&lt;p&gt;いちおうこの状態での&lt;a href=&#34;https://gist.github.com/magepa/caa9cb778f904318726d&#34;&gt;起動ログ&lt;/a&gt;をおいておききます。&lt;/p&gt;
+</description>
+    </item>
     
     <item>
       <title>BeagleBone Black向けにYocto 1.7 Dizzyをビルド</title>

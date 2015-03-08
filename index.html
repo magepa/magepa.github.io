@@ -55,6 +55,195 @@
             
             <div class="posts">
                 
+                <h1 class="content-subhead">2015/03/08, 19:42</h1>
+                <section class="post">
+                    <header class="post-header">
+                        <a href="https://magepa.github.io/post/2015-03/boot-yoct/" class="post-title">ビルドしたYoct1.7のイメージでBeagleBone Blackを起動</a>
+                        <p class="post-meta">
+                            
+                            
+                        </p>
+                    </header>
+                    <div class="post-description">
+                        
+
+<p>実際にビルドして起動してみました。</p>
+
+<p>Yoctoの公式サポート環境ではありませんが、Debian GNU/Linux 7.8 (whzzy)でクロス環境構築からビルドまでを実行しました。</p>
+
+<p>実施手順はほぼ昨日翻訳した記事の通りです。</p>
+
+<h2 id="ホスト環境:948f38676c61807d74ff352b8055872d">ホスト環境</h2>
+
+<p>aptでインストール一発です。</p>
+
+<pre><code>$ sudo apt-get install gawk wget git-core diffstat unzip texinfo gcc-multilib \
+     build-essential chrpath libsdl1.2-dev xterm
+</code></pre>
+
+<p>これはVirtual Box 環境でも30分もあれば終わるでしょう。</p>
+
+<h2 id="クロス環境構築:948f38676c61807d74ff352b8055872d">クロス環境構築</h2>
+
+<pre><code>$ mkdir -p ~/yocto/dl
+$ cd ~/yocto
+$ git clone -b dizzy git://git.yoctoproject.org/poky poky-dizzy
+$
+$ cd ~/yocto
+$ source poky-dizzy/oe-init-build-env build-dizzy
+</code></pre>
+
+<p>これでクロス環境のビルドがはじまります。<br />
+toolchain を作るのに必要な環境を構築してくれます。<br />
+動きとしては makefile  のお化けみたいなレシピに<br />
+ダウンロードするパッケージと、それに当てるパッチのダウンロードリスト、<br />
+当てる順番、ビルドする順序などがかかれていて、順番に実行てくれます。</p>
+
+<p>Core i5 のMac miniにのせた Virtual Box 上 の Debianでは3時間ぐらいでした。</p>
+
+<h2 id="toolchain-のビルドとイメージのビルド:948f38676c61807d74ff352b8055872d">Toolchain のビルドとイメージのビルド</h2>
+
+<p>~/Yocto/build-dizzy/conf/local.conf を編集して以下を追加します。</p>
+
+<pre><code>MACHINE ?= &quot;beaglebone&quot;
+DL_DIR ?= &quot;${TOPDIR}/../dl&quot;
+IMAGE_INSTALL_append = &quot; kernel-modules kernel-devicetree&quot;
+</code></pre>
+
+<p>これを保存して、最小構成でビルドします</p>
+
+<pre><code>source poky-dizzy/oe-init-build-env build-dizzy
+bitbake core-image-minimal
+</code></pre>
+
+<p>これは5時間ぐらいかかりました。<br />
+やっているのはpokyのビルドとほとんど同じ内容の繰り返しです。<br />
+BeagleBone Blackのクロス環境の構築に必要なソースとpatchをダウンロードしてパッチを適用してビルド、<br />
+プリローダーとu-boot のソースと必要なpatchをダウンロードしてビルド、<br />
+カーネルソースとBSP、当てるpatchをダウンロードしてビルド、<br />
+rootfsを構築してインストールするパッケージと当てるpatchをダウンロードしてビルドインストールして<br />
+rootfsのイメージを圧縮します。</p>
+
+<p>というわけでこのコマンドだけで独自ビルドのカーネルのベースが出来上がります。</p>
+
+<p>以前はこの作業一個一個手でやって、クロス環境のこっちでの依存関係と<br />
+あっちでの依存関係とか、相性とか疑いならやっていたことを考えると<br />
+こんなレベルの記述でいいのかと思ったりもしてしまいますが<br />
+ようやくこういう時代になったか。。という気がしないでもありません。</p>
+
+<p>中でもクロス環境が何も考えずにできる、というのがYoctoのいいとこで、
+クロス環境があらかじめある程度テストされているので<br />
+その辺を疑わずにすむのは気分的に相当楽です。</p>
+
+<p>レシピやBSPはYocto のお作法にのっとっていじれば基盤が変わっても使えたりしますし<br />
+お作法を覚えなくともカーネル弄ってリビルドする環境までできるので<br />
+とっかかりには良いと思います。<br />
+もちろんそれには、BSPがカーネルでサポートされているか、
+Yoctoでサポートされている必要があるのでどんな環境でも行けるわけではありません。<br />
+オープンなHW環境が増えればいいなと思います。</p>
+
+<h2 id="virtualboxからmicrosdカードにアクセスする:948f38676c61807d74ff352b8055872d">VirtualBoxからmicroSDカードにアクセスする</h2>
+
+<p>仮想環境から実デバイスへの書き込みも、以前は本当に無理でしたが<br />
+ググリテラリシさえあればなんとなる世の中になりました。</p>
+
+<p>Mac Book とか Mac mini のSDカードスロットを使うときにはraw.vmdkとかを使えばできます。
+Mac内臓の SD カードスロットを使わずに USB 接続のカードリーダーを使えばあっさりできます。<br />
+SD カードスロットを使う方法については</p>
+
+<ul>
+<li><a href="http://qiita.com/key/items/1bb2e4f061446c667c07">MacBook ProのSDカードスロットをVirtualBoxのrawdiskとして使う</a></li>
+</ul>
+
+<p>に情報はありますが、OSのバージョンが違うのか若干うまくいかないものがありました。アンマウントするタイミングがいくつか抜けているのと、Mountain Lion 以降では　いろいろなタイミングでauto mount 走ってしまってうまくいきません。</p>
+
+<p>情報としては</p>
+
+<ul>
+<li><a href="http://superuser.com/questions/373463/how-to-access-an-sd-card-from-a-virtual-machine">How to access an SD card from a virtual machine?　- Super User</a></li>
+</ul>
+
+<p>にあるのが確度が高いと思います。</p>
+
+<ul>
+<li>Virtual Boxを終了する</li>
+<li>SD カードをスロットに刺す</li>
+<li>Terminalでmountを実行してデバイス名(/dev/****)を取得</li>
+<li>ディスクユーティリティーを起動</li>
+<li>ディスクユーティリティーで右クリック、SD をUnmountする(取り出しではない）</li>
+<li>デバイスの所有者を実行ユーザーにして、モードを777にする
+デバイスがdisk1の場合は以下のようにします。</li>
+</ul>
+
+<pre><code>$ sudo chown YOUR_USER_NAME /dev/disk1* 
+$ sudo chmode 777 /dev/disk1*
+</code></pre>
+
+<ul>
+<li>vmdkを生成する</li>
+</ul>
+
+<pre><code>$ cd ~/VirtualBox\ VMs/SomeVM/
+$ sudo VBoxManage internalcommands createrawvmdk -filename ./raw.vmdk -rawdisk /dev/disk1
+$ sudo chown YOUR_USER_NAME raw.vmdk
+</code></pre>
+
+<ul>
+<li>VirtualBoxを起動。VMのストレージに生成したvmdkファイルを設定する</li>
+<li>ゲストOSを起動。</li>
+<li>MacOSX10.8以降の場合以下を実行してauto mount を止める</li>
+</ul>
+
+<pre><code>$ sudo launchctl list | grep diskarbitrationd
+188 - com.apple.diskarbitrationd 
+$ sudo kill -SIGSTOP 188 # automountを停止
+$ sudo kill -SIGCONT 188 # automountを再開
+</code></pre>
+
+<p>automount停止のと再開の間にディスクユーティリティーをactiveにするとハングアップすることがありました。大体は再開の方のコマンドを実行すると元に戻ります。
+* ゲストOSで必要な操作を実行する
+* automountを停止したばあいは再開のコマンドで元に戻す</p>
+
+<p>USB のカードリーダーを使うと、この工程全部すっ飛ばして、ゲストOSでの操作だけやればOKです。<br />
+ゲストOSでのデバイス名だけが異なります。</p>
+
+<h2 id="sd-のフォーマットと書き込み:948f38676c61807d74ff352b8055872d">SD のフォーマットと書き込み</h2>
+
+<p>手順通りで何もありません。
+デバイス名だけ /dev/sdbかどうか確認してください。</p>
+
+<pre><code>cd ~/yocto/
+git clone https://github.com/henriqueprossi/beaglebone-black.git bbb-sdcard-prepare
+cd ~/yocto/bbb-sdcard-prepare/scripts
+chmod +x format_sd_card.sh
+sudo ./format_sd_card.sh /dev/sdb
+</code></pre>
+
+<p>サイズによってはフォーマットの最後で終了せずにエラーで終わることもあるみたいです。
+フォーマット終了後に/mnt/bootと/mnt/rootfsがmount されたら大体成功しています。</p>
+
+<p>書き込みは~/yocto/build-dizzy/tmp/deploy/images/beaglebone<br />
+にできているイメージを書き込むだけです。<br />
+ここにビルドした MLO, u-boot, カーネル、rootfs  が保存されています。<br />
+細かくは後ほど。</p>
+
+<p>SD はbootとカーネル以降格納用に分割されているので基本コピーするだけです。</p>
+
+<pre><code>cd ~/yocto/build-dizzy/tmp/deploy/images/beaglebone
+cp MLO /media/boot
+cp u-boot.img /media/boot
+# core-image-minimal をコピーする場合
+sudo tar xjf core-image-minimal-beaglebone.tar.bz2 -C /media/rootfs ; sync
+</code></pre>
+
+<p>としたmicroSDをBeagle Bone Blackに挿入し、<br />
+ボタンを押しながら起動すると、Yoctoで生成した環境で起動します。</p>
+
+<p>いちおうこの状態での<a href="https://gist.github.com/magepa/caa9cb778f904318726d">起動ログ</a>をおいておききます。</p>
+
+                    </div>
+                </section>
+                
                 <h1 class="content-subhead">2015/03/07, 16:59</h1>
                 <section class="post">
                     <header class="post-header">
