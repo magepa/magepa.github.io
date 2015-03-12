@@ -13,11 +13,6 @@
   </url>
   
   <url>
-    <loc>http://localhost:1313/post/2015-03/Yocto-1.7.1-rootfs-0/</loc>
-    <lastmod>2015-03-10T23:36:01+09:00</lastmod>
-  </url>
-  
-  <url>
     <loc>http://localhost:1313/post/2015-03/boot-yoct/</loc>
     <lastmod>2015-03-08T19:42:21+09:00</lastmod>
   </url>
